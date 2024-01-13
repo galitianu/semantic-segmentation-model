@@ -27,8 +27,8 @@ class LFWDataset(torch.utils.data.Dataset):
         if download:
             self.download_resources(base_folder)
 
-        x_path = rf'lfw_dataset\lfw_funneled'
-        y_path = rf'lfw_dataset\parts_lfw_funneled_gt_images'
+        x_path = rf'lfw_dataset/lfw_funneled'
+        y_path = rf'lfw_dataset/parts_lfw_funneled_gt_images'
         self.X = []
         self.Y = [os.path.join(y_path, img) for img in os.listdir(y_path)
                   if img.endswith('ppm') and not img.startswith('.')]

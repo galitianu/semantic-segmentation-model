@@ -43,11 +43,11 @@ class DecoderBlock(nn.Module):
 
 
 class Encoder(nn.Module):
-    def __init__(self, nrChannelsPerBlock=[3, 64, 128, 256, 512, 1024]):
+    def __init__(self, channels):
         super(Encoder, self).__init__()
         self.layers = nn.ModuleList()
-        for block in range(len(nrChannelsPerBlock) - 1):
-            self.layers.append(EncoderBlock(nrChannelsPerBlock[block], nrChannelsPerBlock[block + 1]))
+        for block in range(len(channels) - 1):
+            self.layers.append(EncoderBlock(channels[block], channels[block + 1]))
             # self.layers.append(nn.MaxPool2d(2))
 
     def forward(self, x):
@@ -73,6 +73,26 @@ class Decoder(nn.Module):
         return x
 
 
-class UNet(torch.nn.Module):
-    def __init__(self, num_classes):
-        super().__init__()
+class UNet(nn.Module):
+    def __init__(self, encoder_channels, decoder_depths, num_classes):
+        super(UNet, self).__init__()
+        self.encoder = Encoder(encoder_channels)
+        self.decoder = Decoder(decoder_depths)
+
+        # 1x1 convolution to get the segmentation map
+        self.final_conv = nn.Conv2d(decoder_depths[0], num_classes, kernel_size=1)
+
+    def forward(self, x):
+        # Encoder
+        enc_activations = self.encoder(x)
+
+        # Decoder with skip connections
+        dec_output = self.decoder(enc_activations[-1], enc_activations[:-1])
+
+        # Segmentation map
+        seg_map = self.final_conv(dec_output)
+
+        # Resize to match the input dimensions
+        seg_map = nn.functional.interpolate(seg_map, size=x.size()[2:], mode='bilinear', align_corners=False)
+
+        return seg_map
