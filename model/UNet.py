@@ -8,11 +8,11 @@ class EncoderBlock(nn.Module):
         super(EncoderBlock, self).__init__()
         self.layers = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
-            nn.BatchNorm2d(out_channels),
+            # nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
 
-            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
-            nn.BatchNorm2d(out_channels),
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
+            # nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
         )
 
@@ -26,7 +26,7 @@ class DecoderBlock(nn.Module):
         self.up = nn.ConvTranspose2d(in_channels, middle_channels, kernel_size=2, stride=2)
         self.bn = nn.BatchNorm2d(middle_channels)
         self.relu = nn.ReLU(inplace=True)
-        self.conv_block = EncoderBlock(middle_channels + out_channels, out_channels)
+        self.conv_block = EncoderBlock(in_channels, middle_channels)
 
     def forward(self, x, skip):
         x = self.up(x)
@@ -64,12 +64,15 @@ class Decoder(nn.Module):
     def __init__(self, depths):
         super(Decoder, self).__init__()
         self.layers = nn.ModuleList()
-        for i in range(len(depths) - 2, -1, -1):
-            self.layers.append(DecoderBlock(depths[i + 1], depths[i], depths[i]))
+        for i in range(len(depths)):
+            in_channels = depths[i] * 2
+            middle_channels = depths[i]
+            out_channels = depths[i]
+            self.layers.append(DecoderBlock(in_channels, middle_channels, out_channels))
 
     def forward(self, x, enc_activations):
         for i, layer in enumerate(self.layers):
-            x = layer(x, enc_activations[i])
+            x = layer(x, enc_activations[len(enc_activations) - i - 1])
         return x
 
 
@@ -80,7 +83,7 @@ class UNet(nn.Module):
         self.decoder = Decoder(decoder_depths)
 
         # 1x1 convolution to get the segmentation map
-        self.final_conv = nn.Conv2d(decoder_depths[0], num_classes, kernel_size=1)
+        self.final_conv = nn.Conv2d(encoder_channels[1], num_classes, kernel_size=1)
 
     def forward(self, x):
         # Encoder
