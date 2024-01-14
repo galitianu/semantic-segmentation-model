@@ -6,7 +6,7 @@ from dataset import LFWDataset
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from eval_metrics import mean_pixel_accuracy, mean_iou, frequency_weighted_iou
+from eval_metrics import calculate_segmentation_metrics
 from model.UNet import UNet
 
 
@@ -51,13 +51,9 @@ def validate(val_loader, model, criterion, device):
             loss = criterion(outputs, masks)
             val_loss += loss.item()
 
-            mpa = mean_pixel_accuracy(outputs, masks, num_classes)
+            mpa, miou, fwiou = calculate_segmentation_metrics(outputs, masks, num_classes)
             total_mpa += mpa
-
-            miou = mean_iou(outputs, masks, num_classes)
             total_miou += miou
-
-            fwiou = frequency_weighted_iou(outputs, masks, num_classes)
             total_fwiou += fwiou
 
         avg_val_loss = val_loss / len(val_loader)
