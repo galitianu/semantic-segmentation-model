@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 from eval_metrics import calculate_segmentation_metrics
 from model.UNet import UNet
+import wandb
 
 
 def train(train_loader, val_loader, model, optimizer, criterion, current_epoch, total_epochs, device):
@@ -60,11 +61,13 @@ def validate(val_loader, model, criterion, device):
         avg_mpa = total_mpa / len(val_loader)  # Average MPA over validation set
         avg_miou = total_miou / len(val_loader)
         avg_fwiou = total_fwiou / len(val_loader)
+        wandb.log({"validation-loss": avg_val_loss, "mean-pixel-accuracy": avg_mpa, "mean-iou": avg_miou, "mean-fwiou": avg_fwiou})
 
         print(f"Validation Loss: {avg_val_loss:.4f}\nMean Pixel Accuracy: {avg_mpa:.4f}\nMean IoU Accuracy: {avg_miou:.4f}\nMean FWIoU Accuracy: {avg_fwiou:.4f}\n")
 
 
 if __name__ == '__main__':
+    wandb.init(project="semantic-segmentation-model")
 
     device = "cuda"  # Device for computation. Using CPU because CUDA is not available
 
