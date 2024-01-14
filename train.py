@@ -6,6 +6,7 @@ from dataset import LFWDataset
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+from eval_metrics import mean_pixel_accuracy, mean_iou, frequency_weighted_iou
 from model.UNet import UNet
 
 
@@ -13,7 +14,8 @@ def train(train_loader, val_loader, model, optimizer, criterion, current_epoch, 
     model.train()  # Set the model to training mode
 
     # Customized tqdm progress bar with correct epoch display
-    pbar = tqdm(train_loader, desc=f"Epoch {current_epoch+1}/{total_epochs}", unit='images', unit_scale=train_loader.batch_size, total=len(train_loader))
+    pbar = tqdm(train_loader, desc=f"Epoch {current_epoch + 1}/{total_epochs}", unit='images',
+                unit_scale=train_loader.batch_size, total=len(train_loader))
 
     running_loss = 0.0
 
@@ -37,20 +39,38 @@ def train(train_loader, val_loader, model, optimizer, criterion, current_epoch, 
 
 def validate(val_loader, model, criterion, device):
     model.eval()  # Set the model to evaluation mode
+    val_loss = 0.0
+    total_mpa = 0.0
+    total_miou = 0.0
+    total_fwiou = 0.0
+
     with torch.no_grad():  # Disable gradient calculation
-        val_loss = 0.0
         for images, masks in val_loader:
             images, masks = images.to(device), masks.to(device)
             outputs = model(images)
             loss = criterion(outputs, masks)
             val_loss += loss.item()
 
-        print(f"Validation Loss: {val_loss/len(val_loader):.4f}")
+            mpa = mean_pixel_accuracy(outputs, masks, num_classes)
+            total_mpa += mpa
+
+            miou = mean_iou(outputs, masks, num_classes)
+            total_miou += miou
+
+            fwiou = frequency_weighted_iou(outputs, masks, num_classes)
+            total_fwiou += fwiou
+
+        avg_val_loss = val_loss / len(val_loader)
+        avg_mpa = total_mpa / len(val_loader)  # Average MPA over validation set
+        avg_miou = total_miou / len(val_loader)
+        avg_fwiou = total_fwiou / len(val_loader)
+
+        print(f"Validation Loss: {avg_val_loss:.4f}\nMean Pixel Accuracy: {avg_mpa:.4f}\nMean IoU Accuracy: {avg_miou:.4f}\nMean FWIoU Accuracy: {avg_fwiou:.4f}\n")
 
 
 if __name__ == '__main__':
 
-    device = "mps"  # Device for computation. Using CPU because CUDA is not available
+    device = "cuda"  # Device for computation. Using CPU because CUDA is not available
 
     # Load and prepare the training data
     train_dataset = LFWDataset(download=False, base_folder='lfw_dataset', split_name="train", transforms=None)
@@ -81,6 +101,3 @@ if __name__ == '__main__':
     # Training loop
     for epoch in range(num_epochs):
         train(train_loader, val_loader, model, optimizer, criterion, epoch, num_epochs, device)
-
-
-
