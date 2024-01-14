@@ -58,7 +58,7 @@ class LFWDataset(torch.utils.data.Dataset):
         seg = Image.open(filename_y)
 
         image_transform = transforms.Compose([
-            transforms.Resize((112, 112), interpolation=Image.LANCZOS),
+            transforms.Resize((286, 286), interpolation=Image.LANCZOS),
             transforms.ToTensor()])
 
         image = image_transform(image)
