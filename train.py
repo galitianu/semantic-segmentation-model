@@ -80,8 +80,8 @@ if __name__ == '__main__':
                              split_name="val", transforms=None)  # Ensure you have a validation split
     val_loader = DataLoader(val_dataset, batch_size=8, pin_memory=True, shuffle=False, sampler=None, num_workers=0)
 
-    encoder_channels = [3, 64, 128, 256, 512, 1024]
-    decoder_depths = [512, 256, 128, 64]
+    encoder_channels = [3, 64, 128, 256, 512]
+    decoder_depths = [256, 128, 64]
     num_classes = 3  # Number of classes in the segmentation problem
 
     # Initialize the U-Net model with 3 input channels and 3 classes
