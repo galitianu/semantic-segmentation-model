@@ -10,6 +10,9 @@ from eval_metrics import calculate_segmentation_metrics
 from log import log_predictions
 from model.UNet import UNet
 import wandb
+from model.model_checkpoint import ModelCheckpoint
+
+checkpoint_callback = ModelCheckpoint(num_checkpoints=5, decreasing_metric=False)
 
 
 def train(train_loader, val_loader, model, optimizer, criterion, current_epoch, total_epochs, device):
@@ -40,10 +43,10 @@ def train(train_loader, val_loader, model, optimizer, criterion, current_epoch, 
         break  # Log one batch per epoch for demonstration
 
     # 6. Evaluate on validation set after each epoch
-    validate(val_loader, model, criterion, device)
+    validate(val_loader, model, criterion, device, current_epoch)
 
 
-def validate(val_loader, model, criterion, device):
+def validate(val_loader, model, criterion, device, current_epoch):
     model.eval()  # Set the model to evaluation mode
     val_loss = 0.0
     total_mpa = 0.0
@@ -68,6 +71,7 @@ def validate(val_loader, model, criterion, device):
         avg_fwiou = total_fwiou / len(val_loader)
         wandb.log({"validation-loss": avg_val_loss, "mean-pixel-accuracy": avg_mpa, "mean-iou": avg_miou,
                    "mean-fwiou": avg_fwiou})
+        checkpoint_callback(model, current_epoch, avg_fwiou)
 
         print(
             f"Validation Loss: {avg_val_loss:.4f}\nMean Pixel Accuracy: {avg_mpa:.4f}\nMean IoU Accuracy: {avg_miou:.4f}\nMean FWIoU Accuracy: {avg_fwiou:.4f}\n")
@@ -76,7 +80,7 @@ def validate(val_loader, model, criterion, device):
 if __name__ == '__main__':
     wandb.init(project="semantic-segmentation-model")
     learning_rate = 0.0001
-    epochs = 3
+    epochs = 10
     batch_size = 8
     wandb.config.update({"learning_rate": learning_rate,
                          "epochs": epochs,
