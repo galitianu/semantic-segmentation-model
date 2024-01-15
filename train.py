@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from eval_metrics import calculate_segmentation_metrics
+from log import log_predictions
 from model.UNet import UNet
 import wandb
 
@@ -33,6 +34,10 @@ def train(train_loader, val_loader, model, optimizer, criterion, current_epoch, 
 
         # Update the progress bar with the running loss
         pbar.set_postfix({"Training Loss": f"{running_loss / (batch_idx + 1):.4f}"})
+
+    for images, masks in val_loader:
+        log_predictions(validation_table, model, images, masks, device)
+        break  # Log one batch per epoch for demonstration
 
     # 6. Evaluate on validation set after each epoch
     validate(val_loader, model, criterion, device)
@@ -61,24 +66,35 @@ def validate(val_loader, model, criterion, device):
         avg_mpa = total_mpa / len(val_loader)  # Average MPA over validation set
         avg_miou = total_miou / len(val_loader)
         avg_fwiou = total_fwiou / len(val_loader)
-        wandb.log({"validation-loss": avg_val_loss, "mean-pixel-accuracy": avg_mpa, "mean-iou": avg_miou, "mean-fwiou": avg_fwiou})
+        wandb.log({"validation-loss": avg_val_loss, "mean-pixel-accuracy": avg_mpa, "mean-iou": avg_miou,
+                   "mean-fwiou": avg_fwiou})
 
-        print(f"Validation Loss: {avg_val_loss:.4f}\nMean Pixel Accuracy: {avg_mpa:.4f}\nMean IoU Accuracy: {avg_miou:.4f}\nMean FWIoU Accuracy: {avg_fwiou:.4f}\n")
+        print(
+            f"Validation Loss: {avg_val_loss:.4f}\nMean Pixel Accuracy: {avg_mpa:.4f}\nMean IoU Accuracy: {avg_miou:.4f}\nMean FWIoU Accuracy: {avg_fwiou:.4f}\n")
 
 
 if __name__ == '__main__':
     wandb.init(project="semantic-segmentation-model")
+    learning_rate = 0.0001
+    epochs = 3
+    batch_size = 8
+    wandb.config.update({"learning_rate": learning_rate,
+                         "epochs": epochs,
+                         "batch_size": batch_size})
+    validation_table = wandb.Table(columns=["Image", "Prediction", "Ground Truth"])
 
     device = "cuda"  # Device for computation. Using CPU because CUDA is not available
 
     # Load and prepare the training data
     train_dataset = LFWDataset(download=False, base_folder='lfw_dataset', split_name="train", transforms=None)
-    train_loader = DataLoader(train_dataset, batch_size=8, pin_memory=True, shuffle=True, sampler=None, num_workers=0)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, pin_memory=True, shuffle=True, sampler=None,
+                              num_workers=0)
 
     # Load and prepare the validation data
     val_dataset = LFWDataset(download=False, base_folder='lfw_dataset',
                              split_name="val", transforms=None)  # Ensure you have a validation split
-    val_loader = DataLoader(val_dataset, batch_size=8, pin_memory=True, shuffle=False, sampler=None, num_workers=0)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, pin_memory=True, shuffle=False, sampler=None,
+                            num_workers=0)
 
     encoder_channels = [3, 64, 128, 256, 512, 1024]
     decoder_depths = [512, 256, 128, 64]
@@ -89,14 +105,15 @@ if __name__ == '__main__':
     model = model.to(device)  # Move the model to the specified device (CPU)
 
     # Set up the optimizer. Using Adam optimizer with a learning rate of 0.0001
-    optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=0.0001)
+    optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=learning_rate)
 
     # Define the loss function - CrossEntropyLoss for multi-class segmentation
     criterion = nn.CrossEntropyLoss()
 
-    # Number of epochs to train the model
-    num_epochs = 70
-
     # Training loop
-    for epoch in range(num_epochs):
-        train(train_loader, val_loader, model, optimizer, criterion, epoch, num_epochs, device)
+    for epoch in range(epochs):
+        train(train_loader, val_loader, model, optimizer, criterion, epoch, epochs, device)
+
+    # Log metrics and table to wandb
+    wandb.log({"validation_predictions": validation_table})
+    wandb.finish()
