@@ -21,12 +21,12 @@ class EncoderBlock(nn.Module):
 
 
 class DecoderBlock(nn.Module):
-    def __init__(self, in_channels, middle_channels, out_channels):
+    def __init__(self, in_channels, out_channels):
         super(DecoderBlock, self).__init__()
-        self.up = nn.ConvTranspose2d(in_channels, middle_channels, kernel_size=2, stride=2)
-        self.bn = nn.BatchNorm2d(middle_channels)
+        self.up = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2)
+        self.bn = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU(inplace=True)
-        self.conv_block = EncoderBlock(in_channels, middle_channels)
+        self.conv_block = EncoderBlock(in_channels, out_channels)
 
     def forward(self, x, skip):
         x = self.up(x)
@@ -48,7 +48,6 @@ class Encoder(nn.Module):
         self.layers = nn.ModuleList()
         for block in range(len(channels) - 1):
             self.layers.append(EncoderBlock(channels[block], channels[block + 1]))
-            # self.layers.append(nn.MaxPool2d(2))
 
     def forward(self, x):
         skip_connections = []
@@ -66,9 +65,8 @@ class Decoder(nn.Module):
         self.layers = nn.ModuleList()
         for i in range(len(depths)):
             in_channels = depths[i] * 2
-            middle_channels = depths[i]
             out_channels = depths[i]
-            self.layers.append(DecoderBlock(in_channels, middle_channels, out_channels))
+            self.layers.append(DecoderBlock(in_channels, out_channels))
 
     def forward(self, x, enc_activations):
         for i, layer in enumerate(self.layers):

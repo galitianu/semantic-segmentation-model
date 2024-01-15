@@ -1,5 +1,6 @@
 import torch
 
+
 def calculate_segmentation_metrics(predicted, target, C):
     """
     Calculate all segmentation metrics: MPA, mIoU, and FWIoU.

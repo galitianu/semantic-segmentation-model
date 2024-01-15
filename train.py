@@ -95,7 +95,7 @@ if __name__ == '__main__':
     criterion = nn.CrossEntropyLoss()
 
     # Number of epochs to train the model
-    num_epochs = 10
+    num_epochs = 70
 
     # Training loop
     for epoch in range(num_epochs):
