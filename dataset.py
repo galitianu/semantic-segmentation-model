@@ -18,7 +18,6 @@ class LFWDataset(torch.utils.data.Dataset):
          "3e7e26e801c3081d651c8c2ef3c45cfc"),
     )
 
-
     def __init__(self, base_folder, transforms, download=True, split_name: str = 'train'):
         super().__init__()
         self.base_folder = base_folder

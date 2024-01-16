@@ -15,7 +15,7 @@ from model.model_checkpoint import ModelCheckpoint
 checkpoint_callback = ModelCheckpoint(num_checkpoints=5, decreasing_metric=False, checkpoint_dir="C:\\Users\\Andrei\\Documents")
 
 
-def train(train_loader, val_loader, model, optimizer, criterion, current_epoch, total_epochs, device):
+def train(train_loader, val_loader, model, optimizer, criterion, current_epoch, total_epochs, device, validation_table, num_classes, wandb_log=True):
     model.train()  # Set the model to training mode
 
     # Customized tqdm progress bar with correct epoch display
@@ -38,15 +38,18 @@ def train(train_loader, val_loader, model, optimizer, criterion, current_epoch, 
         # Update the progress bar with the running loss
         pbar.set_postfix({"Training Loss": f"{running_loss / (batch_idx + 1):.4f}"})
 
+    if wandb_log:
+        wandb.log({"training_loss": running_loss / len(train_loader)})
+
     for images, masks in val_loader:
         log_predictions(validation_table, model, images, masks, device)
         break  # Log one batch per epoch for demonstration
 
     # 6. Evaluate on validation set after each epoch
-    validate(val_loader, model, criterion, device, current_epoch)
+    validate(val_loader, model, criterion, device, current_epoch, num_classes)
 
 
-def validate(val_loader, model, criterion, device, current_epoch):
+def validate(val_loader, model, criterion, device, current_epoch, num_classes):
     model.eval()  # Set the model to evaluation mode
     val_loss = 0.0
     total_mpa = 0.0
@@ -116,7 +119,7 @@ if __name__ == '__main__':
 
     # Training loop
     for epoch in range(epochs):
-        train(train_loader, val_loader, model, optimizer, criterion, epoch, epochs, device)
+        train(train_loader, val_loader, model, optimizer, criterion, epoch, epochs, device, validation_table)
 
     # Log metrics and table to wandb
     wandb.log({"validation_predictions": validation_table})
