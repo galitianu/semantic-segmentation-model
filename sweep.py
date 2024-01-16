@@ -49,7 +49,7 @@ parameters_dict.update({
         'distribution': 'q_log_uniform_values',
         'q': 8,
         'min': 4,
-        'max': 32,
+        'max': 12,
     }
 })
 
