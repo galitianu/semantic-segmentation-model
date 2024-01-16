@@ -11,7 +11,7 @@ sweep_config = {
 }
 
 metric = {
-    'name': 'Validation Loss',
+    'name': 'validation-loss',
     'goal': 'minimize'
 }
 
