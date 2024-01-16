@@ -12,7 +12,7 @@ from model.UNet import UNet
 import wandb
 from model.model_checkpoint import ModelCheckpoint
 
-checkpoint_callback = ModelCheckpoint(num_checkpoints=5, decreasing_metric=False)
+checkpoint_callback = ModelCheckpoint(num_checkpoints=5, decreasing_metric=False, checkpoint_dir="C:\\Users\\Andrei\\Documents")
 
 
 def train(train_loader, val_loader, model, optimizer, criterion, current_epoch, total_epochs, device):
