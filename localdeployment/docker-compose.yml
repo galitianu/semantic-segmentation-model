@@ -1,0 +1,21 @@
+version: "3.3"
+
+services:
+  affectune-api:
+    container_name: semantic-segmentation-model
+    image: semantic-segmentation-model
+    restart: unless-stopped
+    ports:
+      - "7860:7860"
+    labels:
+      - "traefik.http.services.semantic-segmentation-model.loadbalancer.server.port=7860"
+      - "traefik.enable=true"
+      - "traefik.http.routers.semantic-segmentation-model.rule=Host(`semantic-segmentation-model.galitianu.com`)"
+      - "traefik.http.routers.semantic-segmentation-model.entrypoints=websecure"
+      - "traefik.http.routers.semantic-segmentation-model.tls.certresolver=myresolver"
+    networks:
+      - traefik_default
+
+networks:
+  traefik_default:
+    external: true

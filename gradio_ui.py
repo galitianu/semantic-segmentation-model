@@ -59,7 +59,6 @@ def blur_background(input_image):
     # Ensure the mask is the same size as the original image
     original_pil = original_pil.resize(mask_image.size)
     blurred_image = original_pil.filter(ImageFilter.GaussianBlur(radius=5))
-    print(blurred_image.size, original_pil.size, mask_image.size)
     # Combine the blurred and original images using the mask
     final_image = Image.composite(blurred_image, original_pil, mask_image)
 
@@ -70,4 +69,4 @@ if __name__ == '__main__':
     webcam = gr.Image(height=286, width=286, sources=["webcam"], streaming=True)
     webapp = gr.Interface(fn=blur_background, inputs=webcam, outputs="image")
 
-    webapp.launch()
+    webapp.launch(server_name="0.0.0.0", server_port=7860, debug=False)
