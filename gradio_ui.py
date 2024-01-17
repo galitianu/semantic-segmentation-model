@@ -1,51 +1,66 @@
+import io
+
 import cv2
 import gradio as gr
 import numpy as np
 import torch
 from torchvision import transforms
 
+from model.UNet import UNet
+
 
 def blur_background(input_image):
     input_image = cv2.cvtColor(input_image, cv2.COLOR_RGB2BGR)
-    # Generate a blank mask
-    # TODO your code here: call a segmentation model to get predicted mask
-    mask = np.zeros_like(input_image)
 
-    model = torch.jit.load("scripted_resnet18.pt")
+    # Load ScriptModule from io.BytesIO object
+    with open(rf'model.pt', 'rb') as f:
+        buffer = io.BytesIO(f.read())
+
+    encoder_channels = [3, 64, 128, 256, 512, 1024]
+    decoder_depths = [512, 256, 128, 64]
+    num_classes = 3  # Number of classes in the segmentation problem
+
+    # Initialize the U-Net model with 3 input channels and 3 classes
+    model = UNet(encoder_channels, decoder_depths, num_classes)
+    model.load_state_dict(torch.load(buffer))
 
     preprocess = transforms.Compose([
-        transforms.Resize(256),
-        transforms.CenterCrop(224),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        transforms.Resize(286),
+        transforms.CenterCrop(286),
     ])
 
     input_tensor = preprocess(input_image)
     input_batch = input_tensor.unsqueeze(0)  # Add batch dimension
 
     with torch.no_grad():
-        # run the scripted model
+        # run the model
         output = model(input_batch)
-    print(output.size())
-    # for demo purposes, we are going to create a random segmentation mask
-    #  just a circular blob centered in the middle of the image
-    center_x, center_y = mask.shape[1] // 2, mask.shape[0] // 2
-    cv2.circle(mask, (center_x, center_y), 100, (255, 255, 255), -1)
 
-    # Convert the mask to grayscale
-    mask_gray = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-    mask_gray = mask_gray[:, :, np.newaxis]
+    # Use the last channel (channel index 2) of the model's output as the blur mask
+    blur_mask = output[:, 2, :, :]  # Assuming the last channel corresponds to the mask
 
-    # apply a strong Gaussian blur to the areas outside the mask
-    blurred = cv2.GaussianBlur(input_image, (51, 51), 0)
-    result = np.where(mask_gray, input_image, blurred)
+    # Convert the blur mask to a numpy array
+    blur_mask = blur_mask.cpu().numpy()
+    blur_mask = np.squeeze(blur_mask)  # Remove the batch dimension
+
+    # Resize the blur mask to match the shape of input_image
+    blur_mask = cv2.resize(blur_mask, (input_image.shape[1], input_image.shape[0]))
+
+    # Apply Gaussian blur based on the mask
+    blurred_input = cv2.GaussianBlur(input_image, (51, 51), 0)
+
+    # Normalize pixel values to be between -1 and 1
+    result = (input_image.astype(np.float32) / 255.0) * (1 - blur_mask[:, :, np.newaxis]) + (
+                blurred_input.astype(np.float32) / 255.0) * blur_mask[:, :, np.newaxis]
 
     # Convert the result back to RGB format for Gradio
-    result = cv2.cvtColor(result, cv2.COLOR_BGR2RGB)
+    result = cv2.cvtColor((result * 255).astype(np.uint8), cv2.COLOR_BGR2RGB)
     return result
 
 
-webcam = gr.Image(height=640, width=480, sources=["webcam"], streaming=True)
-webapp = gr.interface.Interface(fn=blur_background, inputs=webcam, outputs="image")
+if __name__ == '__main__':
+    webcam = gr.Image(height=640, width=480, sources=["upload"])
+    webapp = gr.Interface(fn=blur_background, inputs=webcam, outputs="image")
 
-webapp.launch()
+    webapp.launch()
