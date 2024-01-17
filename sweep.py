@@ -56,6 +56,32 @@ parameters_dict.update({
 validation_table = wandb.Table(columns=["Image", "Prediction", "Ground Truth"])
 
 
+grid_sweep_config = {
+    'method': 'grid',
+    'metric': {
+        'name': 'validation-loss',
+        'goal': 'minimize'
+    },
+    'parameters': {
+        'optimizer': {
+            'values': ['adam', 'sgd']
+        },
+        'epochs': {
+            'values': [5, 10]
+        },
+        'learning_rate': {
+            'values': [0.01, 0.001, 0.0001]
+        },
+        'batch_size': {
+            'values': [6, 8, 10]
+        }
+    }
+}
+
+# Rest of your code remains the same
+
+
+
 def sweep_run():
     with wandb.init() as run:
         config = wandb.config
@@ -64,7 +90,8 @@ def sweep_run():
 
         # Load and prepare the training data
         train_dataset = LFWDataset(download=False, base_folder='lfw_dataset', split_name="train", transforms=None)
-        train_loader = DataLoader(train_dataset, batch_size=config.batch_size, pin_memory=True, shuffle=True, sampler=None,
+        train_loader = DataLoader(train_dataset, batch_size=config.batch_size, pin_memory=True, shuffle=True,
+                                  sampler=None,
                                   num_workers=0)
 
         # Load and prepare the validation data
@@ -90,8 +117,10 @@ def sweep_run():
         criterion = nn.CrossEntropyLoss()
         # Training loop
         for epoch in range(config.epochs):
-            train(train_loader, val_loader, model, optimizer, criterion, epoch, config.epochs, device, validation_table, 3)
+            train(train_loader, val_loader, model, optimizer, criterion, epoch, config.epochs, device, validation_table,
+                  3)
 
 
-sweep_id = wandb.sweep(sweep_config, project="semantic-segmentation-model")
-wandb.agent(sweep_id, sweep_run)
+if __name__ == '__main__':
+    sweep_id = wandb.sweep(grid_sweep_config, project="semantic-segmentation-model")
+    wandb.agent(sweep_id, sweep_run)
