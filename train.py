@@ -12,7 +12,7 @@ from model.UNet import UNet
 import wandb
 from model.model_checkpoint import ModelCheckpoint
 
-checkpoint_callback = ModelCheckpoint(num_checkpoints=5, decreasing_metric=False, checkpoint_dir="C:\\Users\\Andrei\\Documents")
+checkpoint_callback = ModelCheckpoint(num_checkpoints=5, decreasing_metric=False, checkpoint_dir="/Users/andrei")
 
 
 def train(train_loader, val_loader, model, optimizer, criterion, current_epoch, total_epochs, device, validation_table, num_classes, wandb_log=True):
@@ -90,7 +90,7 @@ if __name__ == '__main__':
                          "batch_size": batch_size})
     validation_table = wandb.Table(columns=["Image", "Prediction", "Ground Truth"])
 
-    device = "cuda"  # Device for computation. Using CPU because CUDA is not available
+    device = "mps"  # Device for computation. Using CPU because CUDA is not available
 
     # Load and prepare the training data
     train_dataset = LFWDataset(download=False, base_folder='lfw_dataset', split_name="train", transforms=None)

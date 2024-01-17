@@ -86,7 +86,7 @@ def sweep_run():
     with wandb.init() as run:
         config = wandb.config
 
-        device = "cuda"  # Device for computation. Using CPU because CUDA is not available
+        device = "mps"  # Device for computation. Using CPU because CUDA is not available
 
         # Load and prepare the training data
         train_dataset = LFWDataset(download=False, base_folder='lfw_dataset', split_name="train", transforms=None)
