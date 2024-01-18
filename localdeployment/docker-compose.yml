@@ -1,7 +1,7 @@
 version: "3.3"
 
 services:
-  affectune-api:
+  semantic-segmentation-model:
     container_name: semantic-segmentation-model
     image: semantic-segmentation-model
     restart: unless-stopped
