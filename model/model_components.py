@@ -3,12 +3,6 @@ import torch.nn as nn
 
 
 def upsample_block(x, filters, size, stride=2):
-    """
-  x - the input of the upsample block
-  filters - the number of filters to be applied
-  size - the size of the filters
-  """
-
     # TODO your code here
     # transposed convolution
     x = nn.ConvTranspose2d(in_channels=x.size(1),

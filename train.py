@@ -27,13 +27,13 @@ def train(train_loader, val_loader, model, optimizer, criterion, current_epoch, 
     for batch_idx, (images, masks) in enumerate(pbar):
         images, masks = images.to(device), masks.to(device)
 
-        optimizer.zero_grad()  # 2. Zero the optimizer's gradients
-        outputs = model(images)  # 3. Perform the forward pass
-        loss = criterion(outputs, masks)  # 4. Calculate the loss
+        optimizer.zero_grad()  # Zero the optimizer's gradients
+        outputs = model(images)  # Perform the forward pass
+        loss = criterion(outputs, masks)  # Calculate the loss
         running_loss += loss.item()
 
-        loss.backward()  # 4. Calculate gradients (backpropagation)
-        optimizer.step()  # 5. Adjust the model's weights
+        loss.backward()  # Calculate gradients (backpropagation)
+        optimizer.step()  # Adjust the model's weights
 
         # Update the progress bar with the running loss
         pbar.set_postfix({"Training Loss": f"{running_loss / (batch_idx + 1):.4f}"})
@@ -45,7 +45,7 @@ def train(train_loader, val_loader, model, optimizer, criterion, current_epoch, 
         log_predictions(validation_table, model, images, masks, device)
         break  # Log one batch per epoch for demonstration
 
-    # 6. Evaluate on validation set after each epoch
+    # Evaluate on validation set after each epoch
     validate(val_loader, model, criterion, device, current_epoch, num_classes)
 
 
@@ -90,7 +90,7 @@ if __name__ == '__main__':
                          "batch_size": batch_size})
     validation_table = wandb.Table(columns=["Image", "Prediction", "Ground Truth"])
 
-    device = "mps"  # Device for computation. Using CPU because CUDA is not available
+    device = "mps"  # Device for computation
 
     # Load and prepare the training data
     train_dataset = LFWDataset(download=False, base_folder='lfw_dataset', split_name="train", transforms=None)
@@ -107,11 +107,11 @@ if __name__ == '__main__':
     decoder_depths = [256, 128, 64]
     num_classes = 3  # Number of classes in the segmentation problem
 
-    # Initialize the U-Net model with 3 input channels and 3 classes
+    # Initialize the U-Net model
     model = UNet(encoder_channels, decoder_depths, num_classes)
-    model = model.to(device)  # Move the model to the specified device (CPU)
+    model = model.to(device)  # Move the model to the specified device
 
-    # Set up the optimizer. Using Adam optimizer with a learning rate of 0.0001
+    # Set up the optimizer
     optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=learning_rate)
 
     # Define the loss function - CrossEntropyLoss for multi-class segmentation

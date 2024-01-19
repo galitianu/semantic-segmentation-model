@@ -21,12 +21,6 @@ parameters_dict = {
     'optimizer': {
         'values': ['adam', 'sgd']
     },
-    # 'fc_layer_size': {
-    #     'values': [128, 256, 512]
-    # },
-    # 'dropout': {
-    #     'values': [0.3, 0.4, 0.5]
-    # },
 }
 
 sweep_config['parameters'] = parameters_dict
@@ -44,8 +38,6 @@ parameters_dict.update({
         'max': 0.1
     },
     'batch_size': {
-        # integers between 32 and 256
-        # with evenly-distributed logarithms
         'distribution': 'q_log_uniform_values',
         'q': 8,
         'min': 4,
@@ -78,15 +70,13 @@ grid_sweep_config = {
     }
 }
 
-# Rest of your code remains the same
-
 
 
 def sweep_run():
     with wandb.init() as run:
         config = wandb.config
 
-        device = "mps"  # Device for computation. Using CPU because CUDA is not available
+        device = "mps"  # Device for computation
 
         # Load and prepare the training data
         train_dataset = LFWDataset(download=False, base_folder='lfw_dataset', split_name="train", transforms=None)
