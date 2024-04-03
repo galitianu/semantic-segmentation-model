@@ -1,8 +1,10 @@
 # Semantic Segmentation Model
 
+A demo version is publicly accessible at [semantic-segmentation-model.galitianu.com]([https://wandb.ai](https://semantic-segmentation-model.galitianu.com/))
+
 ## Overview
 
-This repository contains the implementation of a semantic segmentation model using a slight variation of the U-Net architecture. The model is designed to perform image segmentation on the Labeled Faces in the Wild (LFW) dataset. It leverages PyTorch for model building and training, and integrates Weights & Biases (wandb) for experiment tracking and logging. A demo version is publicly accessible [here]([https://wandb.ai](https://semantic-segmentation-model.galitianu.com/))!
+This repository contains the implementation of a semantic segmentation model using a slight variation of the U-Net architecture. The model is designed to perform image segmentation on the Labeled Faces in the Wild (LFW) dataset. It leverages PyTorch for model building and training, and integrates Weights & Biases (wandb) for experiment tracking and logging.
 
 ## Features
 
