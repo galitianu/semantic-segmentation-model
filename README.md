@@ -1,6 +1,6 @@
 # Semantic Segmentation Model
 
-A demo version is publicly accessible at [semantic-segmentation-model.galitianu.com]([https://wandb.ai](https://semantic-segmentation-model.galitianu.com/))
+A demo version is publicly accessible [here](https://semantic-segmentation-model.galitianu.com/)!
 
 ## Overview
 
